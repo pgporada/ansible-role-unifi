@@ -1,0 +1,38 @@
+---
+# https://www.ui.com/download/unifi/
+unifi_controller_version: 5.10.20
+
+# https://help.ubnt.com/hc/en-us/articles/205202580-UniFi-system-properties-File-Explanation
+unifi_backup_dir: /opt/unifi/backups/
+
+unifi_db_name: ace
+unifi_db_user: changeMePlease
+unifi_db_pass: iAmDumbAndUseDefaultPasswords
+unifi_db_port: "{{ mongodb_net_port|default('27017') }}"
+
+unifi_system_properties:
+  unifi.https.ciphers: TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+  unifi.https.sslEnabledProtocols: TLSv1.2
+  unifi.shutdown.port: 8081 # for management purpose
+  unifi.http.port: 8080 # device inform
+  unifi.https.port: 8443 # controller UI / API
+  portal.http.port: 8880 # portal redirect port for HTTP
+  portal.https.port: 8843 # portal redirect port for HTTPs
+  unifi.db.port: "{{ unifi_db_port }}" # local-bound port for DB server
+  unifi.stun.port: 3478 # UDP port used for STUN
+  autobackup.dir: "{{ unifi_backup_dir }}"
+  db.mongo.local: false
+  unifi.db.extraargs: --smallfiles
+  is_default: false
+  statdb.mongo.uri: mongodb://127.0.0.1/{{ unifi_db_name }}_stat
+  db.mongo.uri: mongodb://127.0.0.1/{{ unifi_db_name }}
+  unfi.db.name: "{{ unifi_db_name }}"
+  debug.system: debug
+  # system_ip: a.b.c.d           # the IP devices should be talking to for inform
+  #
+  ##
+  ## Not entirely sure how to implement this yet
+  ##
+  # statdb.mongo.uri: mongodb://{{ unifi_db_user }}:{{ unifi_db_pass }}@127.0.0.1/{{ unifi_db_name }}_stat
+  # db.mongo.uri: mongodb://{{ unifi_db_user }}:{{ unifi_db_pass }}@127.0.0.1/{{ unifi_db_name }}
+...

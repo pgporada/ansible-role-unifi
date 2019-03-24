@@ -1,0 +1,30 @@
+---
+- name: Write system.properties
+  lineinfile:
+    path: /var/lib/unifi/system.properties
+    regexp: "^{{ item.key }}="
+    line: "{{ item.key }}={{ item.value }}"
+  with_dict: "{{ unifi_system_properties }}"
+  notify: Restart unifi
+
+# Unifi requires A LOT of access because it appears to use db.eval()
+#2019-03-20T04:46:22.526+0000 I ACCESS   [conn9] Unauthorized: not authorized on ace to execute command { $eval: "db.serverStatus()", args: [], $readPreference: { mode: "secondaryPreferred" }, $db: "ace" }
+#2019-03-20T04:46:22.551+0000 I ACCESS   [conn9] Unauthorized: not authorized on admin to execute command { getParameter: 1, featureCompatibilityVersion: 1, $readPreference: { mode: "secondaryPreferred" }, $db: "admin" }
+#2019-03-20T04:46:22.595+0000 I ACCESS   [conn9] Unauthorized: not authorized on ace to execute command { listCollections: 1, cursor: { batchSize: 0 }, $readPreference: { mode: "secondaryPreferred" }, $db: "ace" }
+# - name: Create mongodb user on the unifi controller DB
+#   mongodb_user:
+#     database: "{{ item }}"
+#     name: "{{ unifi_db_user }}"
+#     password: "{{ unifi_db_pass }}"
+#     roles: dbOwner,readWrite
+#     state: present
+#     login_host: 127.0.0.1
+#     login_port: "{{ unifi_db_port }}"
+#     login_user: "{{ mongodb_user_admin_name }}"
+#     login_password: "{{ mongodb_user_admin_password }}"
+#   with_items:
+#     - "{{ unifi_db_name }}"
+#     - "{{ unifi_db_name}}_stat"
+#     - admin
+#   notify: Restart unifi
+...

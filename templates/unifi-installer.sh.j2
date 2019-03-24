@@ -1,0 +1,12 @@
+#!/bin/bash
+# AUTHOR: Phil Porada - philporada@gmail.com
+# WHAT: Repackage the unifi deb after ripping out the
+#       old mongodb dependency. Allows us to use our
+#       own specified version of mongodb.
+
+dpkg-deb -R unifi_{{ unifi_controller_version }}-*_all.deb tmp/
+sed -i '/mongo/d' tmp/DEBIAN/control
+dpkg-deb -b tmp unifi_custom.deb
+echo "unifi unifi/has_backup boolean true" | debconf-set-selections
+DEBIAN_FRONTEND=noninteractive dpkg -i unifi_custom.deb
+rm -rf tmp/ unifi_custom.deb

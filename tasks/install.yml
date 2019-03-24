@@ -1,0 +1,109 @@
+---
+- name: Add apt key
+  apt_key:
+    keyserver: keyserver.ubuntu.com
+    id: C0A52C50
+    state: present
+
+- name: Add apt source
+  apt_repository:
+    repo: "deb http://www.ubnt.com/downloads/unifi/debian stable ubiquiti"
+    update_cache: true
+
+- name: Install dependencies because we're using a newer version of mongodb and we're doing weird shit. It's ok, don't worry."
+  apt:
+    state: latest
+    update_cache: yes
+    name: "{{ packages }} "
+  vars:
+    packages:
+      - jsvc
+      - openjdk-8-jre-headless
+
+- name: Create the groups
+  group:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - unifi
+    - mongodb
+
+- name: Create the users
+  user:
+    name: "{{ item }}"
+    group: "{{ item }}"
+    system: yes
+    create_home: no
+  with_items:
+    - unifi
+    - mongodb
+
+- name: Create the backup directory
+  file:
+    state: directory
+    path: "{{ unifi_backup_dir }}"
+    mode: 0750
+    owner: unifi
+    group: unifi
+    recurse: yes
+
+- name: Set folder permissions to allow mongodb to access the unifi config dir
+  file:
+    state: directory
+    path: "/var/lib/unifi/db/"
+    owner: mongodb
+    group: unifi
+    recurse: no
+
+- name: Set folder permissions to allow mongodb to use the unifi db location
+  file:
+    state: directory
+    path: "/var/lib/unifi/db"
+    owner: mongodb
+    group: unifi
+    mode: 0770
+    recurse: yes
+
+- name: Get previously installed version of unifi controller software
+  shell: "dpkg -l | grep unifi | awk '{print $3}'"
+  changed_when: False
+  failed_when: False
+  register: previous_unifi_version
+
+- name: Previous unifi version
+  debug:
+    var: previous_unifi_version.stdout
+
+- name: Get latest unifi controller software
+  shell: apt update && apt-get download unifi
+  changed_when: False
+
+- name: Get newly downloaded version of unifi controller software
+  shell: "ls /root/unifi_*_all.deb | sort -r  | awk -F'/' '{print $3}' | head -n1 | sed -e 's/unifi_//' -e 's/_all.deb.*//'"
+  changed_when: False
+  failed_when: False
+  register: new_unifi_version
+
+- name: New unifi version
+  debug:
+    var: new_unifi_version.stdout
+
+- name: Lay down unifi installer script
+  template:
+    src: unifi-installer.sh.j2
+    dest: /tmp/unifi-installer.sh
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Run unifi installer script
+  shell: /tmp/unifi-installer.sh
+  when: previous_unifi_version.stdout != new_unifi_version.stdout
+  notify: Restart unifi
+
+- name: Enable unifi
+  service:
+    name: unifi.service
+    masked: no
+    enabled: yes
+...
