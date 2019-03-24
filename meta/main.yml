@@ -7,7 +7,7 @@ galaxy_info:
   platforms:
     - name: Debian
       versions:
-        - 9
+        - stretch
 
 dependencies: []
 ...
